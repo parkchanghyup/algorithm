@@ -1,3 +1,12 @@
+'''
+와일드카드가 접두사에 있는 경우와 접미사에 있는 경우를 나누어서 처리
+와일드카드 부분을 a 와 z로 변경하고 bisect함수를 이용하여 해당 되는 단어가 몇개인지 구하면된다.
+
+예를 들어 쿼리에 'pro???'  가 들어있고 단어에는 [proabc, procdd,prabcd] 가들어있다면 
+prabcd  proaaa(?를 a로변경) proabc procdd prozzz(? 를 z로 변경) 
+prozzz의 인덱스 (4) - proaaa의 인덱스 (1) - 1 = 2  -> 해당하는 가사의 갯수 2 
+'''
+
 # 가사 검색
 
 import bisect
@@ -11,7 +20,7 @@ def func(a,left,right):
 
 def solution(words, queries):
     answer = []
-
+    # 단어 길이 순으로 분리하기위해 딕셔너리 생성
     dic = collections.defaultdict(list)
     dic_reverse = collections.defaultdict(list)
     for word in words:
