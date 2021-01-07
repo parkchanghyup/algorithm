@@ -1,3 +1,12 @@
+'''
+그리디 알고리즘 문제로 +연산을 먼저처리하고 - 연산을 처리해주면 된다.
+1. 숫자와 문자 를 분리하여 저장.
+2. 문자중 +먼저 처리
+3. +처리 후 -처리
+'''
+
+
+
 s =input()
 nums = []
 num = ''
@@ -16,6 +25,7 @@ nums.append(int(num))
 
 # + 먼저 처리
 nums2 = []
+
 for idx,char in enumerate(nums):
     if char == '+':
         

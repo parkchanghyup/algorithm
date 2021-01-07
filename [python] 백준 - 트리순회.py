@@ -33,17 +33,24 @@ def post_order(node):
 n = int(input())
 tree ={}
 
+
 for i in range(n):
     data, left_node, right_node = input().split()
+    # '.' 으로 입력받은값을 None로 바꿔줌
     if left_node == '.':
         left_node = None
+        
     if right_node =='.':
         right_node = None
+    # 트리생성
     tree[data] = Node(data, left_node, right_node)
 
+#전위순회
 pre_order(tree['A'])
 print()
+#중위순회
 in_order(tree['A'])
 print()
+#후위순회
 post_order(tree['A'])
 
