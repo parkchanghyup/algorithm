@@ -1,22 +1,22 @@
 def solution(N, number):
+    
     dp = []
-
+    
     for i in range(1, 9):
         numbers = set()
-        numbers.add(int(i * str(N)))
-
-        for j in range(i - 1):
-            for x in dp[j]:
-                for y in dp[i - j - 2]:
-                    numbers.add(x + y)
-                    numbers.add(x * y)
-                    numbers.add(x - y)
-                    if y != 0:
-                        numbers.add(x // y)
-
+        check_number = int(str(N) * i)
+        
+        numbers.add(check_number)
+        
+        for j in range(i-1):
+            for left in dp[j]:
+                for right in dp[-j-1]:
+                    numbers.add(left - right)
+                    numbers.add(left * right)
+                    numbers.add(left + right)
+                    if right != 0 :
+                        numbers.add(left // right)
+        dp.append(numbers)                
         if number in numbers:
             return i
-
-        dp.append(numbers)
-
     return -1
