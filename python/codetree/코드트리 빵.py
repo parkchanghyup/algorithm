@@ -1,93 +1,126 @@
+from collections import deque
+from typing import List, Tuple, Dict
+import heapq
+
+# 상, 좌, 우, 하 방향으로의 이동을 나타내는 상수
+DX = [0, -1, 1, 0]
+DY = [-1, 0, 0, 1]
 
 
-DX = [0,-1,1,0]
-DY = [-1,0,0,1]
-
-def read_input():
-    n, m = list(map(int,input().split()))
-
-    arr = []
-    convs = {}
-
-    for _ in range(n):
-        arr.append(list(map(int, input().split())))
-
-    for i in range(m):
-        x, y = map(int, input().split())
-        convs[i] = (y-1, x-1)
-
+def read_input() -> Tuple[int, int, List[List[int]], Dict[int, Tuple[int, int]]]:
+    """
+    사용자 입력을 읽어 게임 초기 상태를 설정합니다.
+    """
+    n, m = map(int, input().split())
+    arr = [list(map(int, input().split())) for _ in range(n)]
+    convs = {i: tuple(map(lambda x: int(x) - 1, input().split())) for i in range(m)}
     return n, m, arr, convs
 
-def get_base_camps(arr):
+
+def get_base_camps(arr: List[List[int]]) -> List[Tuple[int, int]]:
+    """
+    격자에서 모든 베이스 캠프의 위치를 찾습니다.
+    """
+    return [(i, j) for i in range(len(arr)) for j in range(len(arr)) if arr[i][j] == 1]
+
+
+def move_user(arr: List[List[int]], start: Tuple[int, int], end: Tuple[int, int]) -> Tuple[int, int]:
+    """
+    사용자를 시작 위치에서 목표 위치로 이동시킵니다.
+    """
     n = len(arr)
-    base_camps = []
-    for i in range(n):
-        for j in range(n):
-            if arr[i][j] == 1:
-                base_camps.append((i,j))
+    queue = deque([(start, [])])
+    visited = set([start])
 
-    return base_camps
+    while queue:
+        (y, x), path = queue.popleft()
+        if (y, x) == end:
+            return path[0] if path else start
 
-def move_user(conv, arr, user):
-    pass
+        for d in range(4):
+            ny, nx = y + DY[d], x + DX[d]
+            if 0 <= ny < n and 0 <= nx < n and arr[ny][nx] != -1 and (ny, nx) not in visited:
+                visited.add((ny, nx))
+                new_path = path + [(ny, nx)] if path else [(ny, nx)]
+                queue.append(((ny, nx), new_path))
 
-def get_first_base_camp(base_camps, arr, conv):
-    c_x, c_y = conv
-    min_dist = int(1e9)
-    first_base_camp = [-1, 1]
-    for b_y, b_x in base_camps:
+    return start
 
-        # 접근 금지면 못감.
-        if arr[b_y][b_x] == -1:
+
+
+def get_first_base_camp(arr, start):
+    """
+    시작 위치에서 가장 가까운 베이스 캠프를 찾습니다.
+    """
+    n = len(arr)
+    distances = [[float('inf')] * n for _ in range(n)]
+    distances[start[0]][start[1]] = 0
+    pq = [(0, start)]
+
+    while pq:
+        dist, (y, x) = heapq.heappop(pq)
+
+        if distances[y][x] < dist:
             continue
-        dist = abs(b_y - c_y) + abs(b_x - c_x)
-        if dist < min_dist:
-            min_dist = dist
-            first_base_camp = [b_y, b_x]
 
-    return first_base_camp
+        if arr[y][x] == 1:
+            return y, x
 
+        for d in range(4):
+            ny, nx = y + DY[d], x + DX[d]
+            if 0 <= ny < n and 0 <= nx < n and arr[ny][nx] != -1:
+                new_dist = dist + 1
+                if new_dist < distances[ny][nx]:
+                    distances[ny][nx] = new_dist
+                    heapq.heappush(pq, (new_dist, (ny, nx)))
+
+    return -1, -1
 
 
 def main():
+    """
+    메인 함수: 게임 로직을 실행합니다.
+    """
     n, m, arr, convs = read_input()
-    users = {}
-
+    users: List[Tuple[int, int]] = []
     answer = 0
+    cnt = 0
 
-    base_camps = get_base_camps(arr)
-    print(base_camps)
-    while answer < m:
+    while cnt < m:
         no_access_pos = []
 
-        for conv_num in convs.keys():
-            conv = convs[conv_num]
-            user = users[conv_num]
-
-            # 이미 도착 하면 continue
+        # 유저 이동
+        for idx, user in enumerate(users):
+            conv = convs[idx]
+            # 이미 도착했으면 continue
             if conv == user:
                 continue
 
-            # 격자에 있는 사람들은 편의점 방향을 향해서 1칸 움직임
-            move_user(conv, arr, user)
+            user = move_user(arr, tuple(user), conv)
+            users[idx] = user
+            if conv == tuple(user):
+                cnt += 1
+                no_access_pos.append(user)
 
-            # 편의점에 도착하면 해당 위치 no_access_pos 로 처리
-
-
-            # 가장 가까운 베이스캠프로 진입
-            y, x = get_first_base_camp(base_camps,arr, conv)
-            users[conv_num] = [x, y]
-
-            # 진입 후 no_access_pos 처리
-            no_access_pos.append((x, y))
-            # print(users, no_access_pos)
-            # break
-
-        # no_access_pos 처리
-        for x, y in no_access_pos:
+        # 이동 불가 처리
+        for y, x in no_access_pos:
             arr[y][x] = -1
-        # break
 
-if __name__=='__main__':
+        if len(users) == len(convs):
+            answer += 1
+            continue
+
+        # 베이스캠프로 이동
+        conv = convs[len(users)]
+        y, x = get_first_base_camp(arr, conv)
+        users.append((y, x))
+        arr[y][x] = -1
+
+        # 턴 증가
+        answer += 1
+
+    print(answer)
+
+
+if __name__ == '__main__':
     main()
-
